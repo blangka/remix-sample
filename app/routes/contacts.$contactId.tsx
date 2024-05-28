@@ -1,41 +1,44 @@
-import { Form } from "@remix-run/react";
-import type { FunctionComponent } from "react";
+import {Form, useLoaderData} from "@remix-run/react";
+import type {FunctionComponent} from "react";
 
-import type { ContactRecord } from "../data";
+import type {ContactRecord} from "../data";
+import {getContact} from "../data";
+import {json} from "@remix-run/node";
+
+export const loader = async ({params}) => {
+    const contact = await getContact(params.contactId);
+    return json({contact});
+};
 
 export default function Contact() {
-    const contact = {
-        first: "Your",
-        last: "Name",
-        avatar: "https://placekitten.com/g/200/200",
-        twitter: "your_handle",
-        notes: "Some notes",
-        favorite: true,
-    };
+    const {contact} = useLoaderData<typeof loader>();
 
     return (
         <div id="contact">
+
             <div>
-                <img
-                    alt={`${contact.first} ${contact.last} avatar`}
-                    key={contact.avatar}
-                    src={contact.avatar}
-                />
+                {contact && (
+                    <img
+                        alt={`${contact.first} ${contact.last} avatar`}
+                        key={contact.avatar}
+                        src={contact.avatar}
+                    />
+                )}
             </div>
-
             <div>
-                <h1>
-                    {contact.first || contact.last ? (
-                        <>
-                            {contact.first} {contact.last}
-                        </>
-                    ) : (
-                        <i>No Name</i>
-                    )}{" "}
-                    <Favorite contact={contact} />
-                </h1>
-
-                {contact.twitter ? (
+                {contact && (
+                    <h1>
+                        {contact.first || contact.last ? (
+                            <>
+                                {contact.first} {contact.last}
+                            </>
+                        ) : (
+                            <i>No Name</i>
+                        )}{" "}
+                        <Favorite contact={contact}/>
+                    </h1>
+                )}
+                {contact?.twitter ? (
                     <p>
                         <a
                             href={`https://twitter.com/${contact.twitter}`}
@@ -45,7 +48,7 @@ export default function Contact() {
                     </p>
                 ) : null}
 
-                {contact.notes ? <p>{contact.notes}</p> : null}
+                {contact?.notes ? <p>{contact.notes}</p> : null}
 
                 <div>
                     <Form action="edit">
@@ -68,13 +71,15 @@ export default function Contact() {
                     </Form>
                 </div>
             </div>
+
+
         </div>
     );
 }
 
 const Favorite: FunctionComponent<{
     contact: Pick<ContactRecord, "favorite">;
-}> = ({ contact }) => {
+}> = ({contact}) => {
     const favorite = contact.favorite;
 
     return (
